@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YUVA — Personal AI</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#0b1020;
+  color:#fff;
+}
+.app{max-width:700px;margin:auto;padding:18px}
+header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 0 20px
+}
+.logo{font-size:28px;font-weight:800}
+.status{font-size:12px;opacity:.7}
+.card{
+  background:#151c31;
+  border:1px solid #28314d;
+  border-radius:18px;
+  padding:18px;
+  margin-bottom:14px;
+}
+.hero h1{margin:0 0 8px;font-size:25px}
+.hero p{opacity:.75;margin:0}
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+button{
+  width:100%;
+  padding:13px;
+  border:0;
+  border-radius:12px;
+  background:#263452;
+  color:white;
+  font-size:15px;
+}
+button:active{transform:scale(.98)}
+input,textarea{
+  width:100%;
+  padding:13px;
+  margin:7px 0;
+  border-radius:12px;
+  border:1px solid #303b5c;
+  background:#0d1427;
+  color:white;
+  font-size:15px;
+}
+textarea{min-height:90px;resize:vertical}
+.task{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  padding:10px 0;
+  border-bottom:1px solid #29324b;
+}
+.task:last-child{border-bottom:0}
+.task span{flex:1}
+.done{text-decoration:line-through;opacity:.5}
+.chat{
+  min-height:170px;
+  max-height:300px;
+  overflow:auto;
+  padding:10px;
+  background:#0d1427;
+  border-radius:14px;
+}
+.msg{
+  padding:10px;
+  margin:7px 0;
+  border-radius:12px;
+  background:#1b2743;
+}
+.user{background:#263b65}
+.small{font-size:12px;opacity:.65}
+.nav{
+  position:sticky;
+  bottom:10px;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:7px;
+  margin-top:15px;
+}
+.nav button{font-size:12px;padding:11px 4px}
+.section{display:none}
+.section.active{display:block}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<header>
+  <div class="logo">🤖 YUVA</div>
+  <div class="status">PERSONAL v0.1</div>
+</header>
+
+<div id="home" class="section active">
+
+<div class="card hero">
+  <h1 id="greeting">Hello 👋</h1>
+  <p>I'm YUVA. Let's make today productive.</p>
+</div>
+
+<div class="card">
+  <h3>🎯 Today's Focus</h3>
+  <p id="focusText">No focus added yet.</p>
+  <input id="focusInput" placeholder="What is today's main goal?">
+  <button onclick="saveFocus()">Save Focus</button>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <h3>📋 Tasks</h3>
+    <h2 id="taskCount">0</h2>
+    <div class="small">Total tasks</div>
+  </div>
+
+  <div class="card">
+    <h3>🔥 Progress</h3>
+    <h2 id="progress">0%</h2>
+    <div class="small">Today's completion</div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>⚡ Quick Actions</h3>
+  <div class="grid">
+    <button onclick="show('study')">📚 Study</button>
+    <button onclick="show('plan')">📅 Plan</button>
+    <button onclick="show('chat')">💬 Talk</button>
+    <button onclick="show('guidance')">🧭 Guidance</button>
+  </div>
+</div>
+
+</div>
+
+<div id="study" class="section">
+<div class="card">
+  <h2>📚 Study</h2>
+  <p>Track what you need to study today.</p>
+
+  <input id="subject" placeholder="Subject">
+  <input id="topic" placeholder="Topic">
+  <button onclick="addStudy()">Add Study Topic</button>
+
+  <div id="studyList"></div>
+</div>
+</div>
+
+<div id="plan" class="section">
+<div class="card">
+  <h2>📅 Planning</h2>
+  <p>Create your daily tasks.</p>
+
+  <input id="taskInput" placeholder="Enter a task">
+  <button onclick="addTask()">Add Task</button>
+
+  <div id="taskList"></div>
+</div>
+</div>
+
+<div id="chat" class="section">
+<div class="card">
+  <h2>💬 Talk to YUVA</h2>
+
+  <div class="chat" id="chatBox">
+    <div class="msg">
+      🤖 <b>YUVA:</b> I'm ready. Tell me what you're working on.
+    </div>
+  </div>
+
+  <input id="chatInput" placeholder="Talk to YUVA..."
+         onkeydown="if(event.key==='Enter')sendChat()">
+
+  <button onclick="sendChat()">Send</button>
+</div>
+</div>
+
+<div id="guidance" class="section">
+<div class="card">
+  <h2>🧭 Guidance</h2>
+  <p>Tell YUVA what you're dealing with.</p>
+
+  <textarea id="problem"
+    placeholder="Write your situation or problem..."></textarea>
+
+  <button onclick="giveGuidance()">Get Guidance</button>
+
+  <div id="guidanceResult"></div>
+</div>
+</div>
+
+<div class="nav">
+  <button onclick="show('home')">🏠 Home</button>
+  <button onclick="show('study')">📚 Study</button>
+  <button onclick="show('plan')">📅 Plan</button>
+  <button onclick="show('chat')">🤖 YUVA</button>
+</div>
+
+</div>
+
+<script>
+
+let tasks=JSON.parse(localStorage.getItem("yuva_tasks")||"[]");
+let studies=JSON.parse(localStorage.getItem("yuva_studies")||"[]");
+
+function show(id){
+  document.querySelectorAll(".section")
+    .forEach(x=>x.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  update();
+}
+
+function save(){
+  localStorage.setItem("yuva_tasks",JSON.stringify(tasks));
+  localStorage.setItem("yuva_studies",JSON.stringify(studies));
+}
+
+function greeting(){
+  let h=new Date().getHours();
+  let text=h<12?"Good Morning ☀️":
+          h<17?"Good Afternoon 🌤️":
+          "Good Evening 🌙";
+  document.getElementById("greeting").innerText=text;
+}
+
+function saveFocus(){
+  let value=document.getElementById("focusInput").value.trim();
+  if(!value)return;
+
+  localStorage.setItem("yuva_focus",value);
+  document.getElementById("focusText").innerText=value;
+  document.getElementById("focusInput").value="";
+}
+
+function addTask(){
+  let input=document.getElementById("taskInput");
+  let text=input.value.trim();
+  if(!text)return;
+
+  tasks.push({text:text,done:false});
+  input.value="";
+  save();
+  update();
+}
+
+function toggleTask(i){
+  tasks[i].done=!tasks[i].done;
+  save();
+  update();
+}
+
+function deleteTask(i){
+  tasks.splice(i,1);
+  save();
+  update();
+}
+
+function addStudy(){
+  let subject=document.getElementById("subject").value.trim();
+  let topic=document.getElementById("topic").value.trim();
+
+  if(!subject||!topic)return;
+
+  studies.push({
+    subject:subject,
+    topic:topic,
+    done:false
+  });
+
+  document.getElementById("subject").value="";
+  document.getElementById("topic").value="";
+
+  save();
+  update();
+}
+
+function toggleStudy(i){
+  studies[i].done=!studies[i].done;
+  save();
+  update();
+}
+
+function update(){
+
+  document.getElementById("taskCount").innerText=tasks.length;
+
+  let completed=tasks.filter(x=>x.done).length;
+  let percent=tasks.length?
+    Math.round(completed/tasks.length*100):0;
+
+  document.getElementById("progress").innerText=percent+"%";
+
+  document.getElementById("taskList").innerHTML=
+    tasks.length?
+    tasks.map((t,i)=>`
+      <div class="task">
+        <input type="checkbox"
+          ${t.done?"checked":""}
+          onchange="toggleTask(${i})">
+        <span class="${t.done?"done":""}">
+          ${escapeHTML(t.text)}
+        </span>
+        <button onclick="deleteTask(${i})">✕</button>
+      </div>
+    `).join("")
+    :
+    '<p class="small">No tasks yet.</p>';
+
+  document.getElementById("studyList").innerHTML=
+    studies.length?
+    studies.map((s,i)=>`
+      <div class="task">
+        <input type="checkbox"
+          ${s.done?"checked":""}
+          onchange="toggleStudy(${i})">
+        <span class="${s.done?"done":""}">
+          <b>${escapeHTML(s.subject)}</b><br>
+          <span class="small">${escapeHTML(s.topic)}</span>
+        </span>
+      </div>
+    `).join("")
+    :
+    '<p class="small">No study topics yet.</p>';
+}
+
+function sendChat(){
+
+  let input=document.getElementById("chatInput");
+  let text=input.value.trim();
+
+  if(!text)return;
+
+  let box=document.getElementById("chatBox");
+
+  box.innerHTML+=`
+    <div class="msg user">
+      👤 ${escapeHTML(text)}
+    </div>
+  `;
+
+  let reply=getReply(text);
+
+  box.innerHTML+=`
+    <div class="msg">
+      🤖 <b>YUVA:</b> ${reply}
+    </div>
+  `;
+
+  input.value="";
+  box.scrollTop=box.scrollHeight;
+}
+
+function getReply(text){
+
+  let t=text.toLowerCase();
+
+  if(t.includes("study")||t.includes("padh")){
+    return "Let's focus on one topic first. Tell me your subject and available study time.";
+  }
+
+  if(t.includes("tired")||t.includes("stress")){
+    return "Take a short break, reset your mind, and then choose one small task to continue.";
+  }
+
+  if(t.includes("plan")){
+    return "Let's break your goal into small tasks. Start with the most important one.";
+  }
+
+  if(t.includes("hello")||t.includes("hi")){
+    return "Hey! I'm YUVA 🤖 What are we working on today?";
+  }
+
+  return "I understand. For now I'm your basic YUVA prototype. Soon I'll have a deeper AI brain to understand your context and goals.";
+}
+
+function giveGuidance(){
+
+  let problem=document.getElementById("problem").value.trim();
+
+  if(!problem)return;
+
+  document.getElementById("guidanceResult").innerHTML=`
+    <div class="msg" style="margin-top:12px">
+      🤖 <b>YUVA:</b><br><br>
+      First, don't try to solve everything at once.
+      Break your situation into the problem, possible options,
+      and the next small action you can take.
+      <br><br>
+      <b>Your next step:</b> Write down one action you can complete today.
+    </div>
+  `;
+}
+
+function escapeHTML(text){
+  return text.replace(/[&<>"']/g,function(m){
+    return ({
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#039;"
+    })[m];
+  });
+}
+
+greeting();
+
+let savedFocus=localStorage.getItem("yuva_focus");
+if(savedFocus){
+  document.getElementById("focusText").innerText=savedFocus;
+}
+
+update();
+
+</script>
+
+</body>
+</html>
